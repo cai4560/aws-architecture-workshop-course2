@@ -9,3 +9,6 @@ jenkins-on-ec2.dev
 
 [jenkins-with-alb-and-asg]
 jenkins-with-alb-and-asg.dev
+
+[jenkins-with-https]
+jenkins-with-https.dev

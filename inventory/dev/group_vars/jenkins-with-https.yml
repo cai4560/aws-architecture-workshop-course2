@@ -1,0 +1,5 @@
+image_id: ami-0ccdbc8c1cb7957be
+instance_type: t2.micro
+asg_min_size: 1
+asg_max_size: 1
+cert_arn: arn:aws:acm:ap-northeast-1:763483695402:certificate/a974688a-7330-408a-af4f-ffba9416e041
