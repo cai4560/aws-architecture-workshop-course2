@@ -21,7 +21,7 @@ Resources:
       GroupDescription: Security group for Jenkins instance
       Tags:
         - Key: Name
-          Value: !Sub "${Project}-${TraineeName}-Jenkins-security-group"
+          Value: !Sub "${TraineeName}-Jenkins-security-group"
 
   JenkinsASLaunchConf:
      Type: AWS::AutoScaling::LaunchConfiguration
@@ -37,5 +37,5 @@ Resources:
         - "Fn::ImportValue": !Sub "${Project}-public-subnet-b"
       Tags:
         - Key: Name
-          Value: !Sub "${Project}-${TraineeName}-jenkins"
+          Value: !Sub "${TraineeName}-jenkins"
           PropagateAtLaunch: true
