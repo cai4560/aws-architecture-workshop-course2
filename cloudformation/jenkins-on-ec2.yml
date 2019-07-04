@@ -19,8 +19,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       SubnetId:
-        Fn::ImportValue:
-          !Sub "${Project}-public-subnet-a"
+        Fn::ImportValue: !Sub "${Project}-public-subnet-a"
       ImageId: !Ref ImageId
       InstanceType: !Ref InstanceType
       KeyName: !Ref Project

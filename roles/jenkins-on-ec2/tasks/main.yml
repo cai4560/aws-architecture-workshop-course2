@@ -1,7 +1,7 @@
 ---
   - name: jenkins-on-ec2
     cloudformation:
-      stack_name: "{{project}}-jenkins-on-ec2-{{trainee_name}}"
+      stack_name: "{{project}}-{{trainee_name}}-jenkins-on-ec2"
       state: present
       region: "{{aws_region}}"
       disable_rollback: true
