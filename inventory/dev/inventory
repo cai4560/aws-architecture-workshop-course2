@@ -6,3 +6,6 @@ bastion.dev
 
 [jenkins-on-ec2]
 jenkins-on-ec2.dev
+
+[jenkins-with-alb-and-asg]
+jenkins-with-alb-and-asg.dev

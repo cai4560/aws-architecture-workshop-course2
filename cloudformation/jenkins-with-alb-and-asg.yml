@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Jenkins Stack'
+
+Parameters:
+  Project:
+    Type: String
+  TraineeName:
+    Type: String
+  PublicHostedZoneName:
+    Description: The Route53 Zone in which to create records
+    Type: String
+  InstanceType:
+    Type: String
+    Description: The instance type
+    Default: t2.micro
+  ImageId:
+    Type: String
+    Description: The instance ami id
+
+Resources:
+  JenkinsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Jenkins instance
+      Tags:
+        - Key: Name
+          Value: !Sub "${Project}-${TraineeName}-Jenkins-security-group"
+
+  JenkinsASLaunchConf:
+     Type: AWS::AutoScaling::LaunchConfiguration
+     Properties:
+        ImageId: !Ref ImageId
+        InstanceType: !Ref InstanceType
+
+  JenkinsASGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - "Fn::ImportValue": !Sub "${Project}-public-subnet-a"
+        - "Fn::ImportValue": !Sub "${Project}-public-subnet-b"
+      Tags:
+        - Key: Name
+          Value: !Sub "${Project}-${TraineeName}-jenkins"
+          PropagateAtLaunch: true

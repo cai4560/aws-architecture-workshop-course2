@@ -1,0 +1,16 @@
+---
+  - name: jenkins-with-alb-and-asg
+    cloudformation:
+      stack_name: "{{project}}-{{trainee_name}}-jenkins-with-alb-and-asg"
+      state: present
+      region: "{{aws_region}}"
+      disable_rollback: true
+      template: "cloudformation/jenkins-with-alb-and-asg.yml"
+      stack_policy: "policies/stack-policy.json"
+      template_parameters:
+        Project: "{{project}}"
+        TraineeName: "{{trainee_name}}"
+        ImageId: "{{image_id}}"
+        InstanceType: "{{instance_type}}"
+      tags:
+        Project: "{{project}}"
