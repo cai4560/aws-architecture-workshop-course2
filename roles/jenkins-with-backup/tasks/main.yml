@@ -1,0 +1,21 @@
+---
+  - name: jenkins-with-backup
+    cloudformation:
+      stack_name: "{{project}}-{{trainee_name}}-jenkins-with-backup"
+      state: present
+      region: "{{aws_region}}"
+      disable_rollback: true
+      template: "cloudformation/jenkins-with-backup.yml"
+      stack_policy: "policies/stack-policy.json"
+      template_parameters:
+        Project: "{{project}}"
+        TraineeName: "{{trainee_name}}"
+        PublicHostedZoneName: "{{public_hosted_zone_name}}."
+        ImageId: "{{image_id}}"
+        InstanceType: "{{instance_type}}"
+        ASGMinSize: "{{asg_min_size}}"
+        ASGMaxSize: "{{asg_max_size}}"
+        CertificateARN: "{{cert_arn}}"
+        BackupBucketName: "{{jenkins_backup_bucket}}"
+      tags:
+        Project: "{{project}}"

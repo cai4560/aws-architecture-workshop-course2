@@ -27,8 +27,41 @@ Parameters:
   CertificateARN:
     Type: String
     Description: The Certificate Manager ARN
+  BackupBucketName:
+    Description: Name of the S3 bucket containing backup rpm package
+    Type: String
 
 Resources:
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+      - !Ref Role
+
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ec2.amazonaws.com]
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: permit-cfn
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - cloudformation:Describe*
+              - cloudformation:Get*
+              - cloudformation:List*
+              - s3:*
+            Resource: '*'
+
   ALBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -117,15 +150,83 @@ Resources:
 
   JenkinsASLaunchConf:
      Type: AWS::AutoScaling::LaunchConfiguration
+     Metadata:
+       AWS::CloudFormation::Init:
+         configSets:
+           InstallAndRun: [Install]
+         Install:
+           files:
+             /usr/local/bin/jenkins-restore:
+               content: !Sub |
+                 #!/bin/bash -e
+                 USAGE="Usage: $0 S3_TARGET JENKINS_HOME"
+                 S3_TARGET=$1
+                 JENKINS_HOME=$2
+                 if [[ -z "`echo $S3_TARGET | grep '^s3://'`" ]]; then
+                   echo -e $USAGE
+                   exit 1
+                 fi
+                 if [[ $S3_TARGET == */ ]]; then
+                   S3_TARGET=$S3_TARGET`aws s3 ls $S3_TARGET | tail -1 | awk '{print $NF}'`
+                 fi
+                 LOCAL_BACKUP=/tmp/`basename $S3_TARGET`
+                 if [[ -d "$LOCAL_BACKUP" ]]; then
+                   rm -rf $LOCAL_BACKUP
+                 fi
+                 aws s3 cp $S3_TARGET $LOCAL_BACKUP
+                 if [[ -d "$JENKINS_HOME" ]]; then
+                   rm -rf $JENKINS_HOME
+                 fi
+                 mkdir -p $JENKINS_HOME
+                 tar zxf $LOCAL_BACKUP -C $JENKINS_HOME
+                 rm -f $LOCAL_BACKUP
+               mode: '000755'
+               owner: root
+               group: root
+             /usr/local/bin/jenkins-backup:
+               content: !Sub |
+                 #!/bin/bash -e
+                 USAGE="Usage: $0 JENKINS_HOME S3_TARGET"
+                 JENKINS_HOME=$1
+                 S3_TARGET=$2
+                 if [[ -z "`echo $S3_TARGET | grep '^s3://'`" || ! -d "$JENKINS_HOME" ]]; then
+                   echo -e $USAGE
+                   exit 1
+                 fi
+                 LOCAL_BACKUP=/tmp/`basename $S3_TARGET`
+                 tar -C $JENKINS_HOME -zcf $LOCAL_BACKUP . \
+                   --exclude "config-history/" \
+                   --exclude "config-history/*" \
+                   --exclude "jobs/*/workspace*" \
+                   --exclude "jobs/*/builds/*/archive" \
+                   --exclude "plugins/*/*" \
+                   --exclude "plugins/*.bak" \
+                   --exclude "war" \
+                   --exclude "cache"
+                 aws s3 cp $LOCAL_BACKUP $S3_TARGET
+                 rm -f $LOCAL_BACKUP
+               mode: '000755'
+               owner: root
+               group: root
      Properties:
         ImageId: !Ref ImageId
         InstanceType: !Ref InstanceType
         KeyName: !Ref Project
+        IamInstanceProfile: !Ref InstanceProfile
         SecurityGroups:
           - !Ref JenkinsSecurityGroup
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash -ex
+            function error_exit
+            {
+              /opt/aws/bin/cfn-signal -e 1 -r $1 ${WaitHandle}
+              exit 1
+            }
+
+            /opt/aws/bin/cfn-init -s ${AWS::StackName} -r JenkinsASLaunchConf  --region ${AWS::Region} --configsets InstallAndRun --role ${Role} || error_exit 'Failed to run cfn-init'
+            echo "*/5 * * * * /usr/local/bin/jenkins-backup /var/lib/jenkins s3://${BackupBucketName}/jenkins-`date +\%Y\%m\%d\%H\%M.tar.gz` >> /var/log/jenkins-backup.log 2>&1" >> /var/spool/cron/root
+            /usr/local/bin/jenkins-restore s3://${BackupBucketName}/ /var/lib/jenkins || true
 
             # Install Jenkins
             yum update -y
@@ -143,8 +244,8 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       VPCZoneIdentifier:
-        - Fn::ImportValue: !Sub "${Project}-public-subnet-a"
-        - Fn::ImportValue: !Sub "${Project}-public-subnet-b"
+        - Fn::ImportValue: !Sub "${Project}-private-subnet-a"
+        - Fn::ImportValue: !Sub "${Project}-private-subnet-b"
       LaunchConfigurationName: !Ref JenkinsASLaunchConf
       MinSize: !Ref ASGMinSize
       MaxSize: !Ref ASGMaxSize

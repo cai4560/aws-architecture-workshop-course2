@@ -1,0 +1,72 @@
+Description: Dynamic-Web-Appliction-with-https-part1
+Parameters:
+  VpcId:
+    Type: String
+    Description: Vpc ID
+  SubnetId:
+    Type: String
+    Description: Subnet ID
+  InstanceType:
+    Type: String
+    Description: Instance Type
+    Default: t2.micro
+  ImageId:
+    Type: String
+    Description: Image ID
+  KeyName:
+    Type: String
+    Description: The key name for ec2 secret key
+  HostedZoneName:
+    Type: String
+    Description: Hosted Zone Name
+  RecordName:
+    Type: String
+    Description: Record Name in Route53
+
+Resources:
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: For EC2 Instance
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      SubnetId: !Ref SubnetId
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -ex
+
+          # Install Jenkins
+          sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins.io/redhat-stable/jenkins.repo
+          echo "enabled=1" >> /etc/yum.repos.d/jenkins.repo
+          sudo rpm --import http://pkg.jenkins.io/redhat-stable/jenkins.io.key
+          sudo yum -y update
+          sudo yum install -y java-1.8.0-openjdk.x86_64 jenkins python-pip git
+          sudo service jenkins restart
+          sudo usermod -a -G root jenkins
+
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Ref RecordName
+      HostedZoneName: !Ref HostedZoneName
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+      - !GetAtt EC2Instance.PublicDnsName

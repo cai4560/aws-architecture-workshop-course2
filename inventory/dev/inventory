@@ -12,3 +12,6 @@ jenkins-with-alb-and-asg.dev
 
 [jenkins-with-https]
 jenkins-with-https.dev
+
+[jenkins-with-backup]
+jenkins-with-backup.dev
