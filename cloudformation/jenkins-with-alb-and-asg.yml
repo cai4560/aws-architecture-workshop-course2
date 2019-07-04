@@ -6,9 +6,6 @@ Parameters:
     Type: String
   TraineeName:
     Type: String
-  PublicHostedZoneName:
-    Description: The Route53 Zone in which to create records
-    Type: String
   InstanceType:
     Type: String
     Description: The instance type
