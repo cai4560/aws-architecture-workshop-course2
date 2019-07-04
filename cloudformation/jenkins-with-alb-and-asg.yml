@@ -40,7 +40,7 @@ Resources:
         CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub "${Project}-${TraineeName}-Jenkins-security-group"
+          Value: !Sub "${TraineeName}-Jenkins-security-group"
 
   JenkinsASLaunchConf:
      Type: AWS::AutoScaling::LaunchConfiguration
@@ -74,5 +74,5 @@ Resources:
       MaxSize: !Ref ASGMaxSize
       Tags:
         - Key: Name
-          Value: !Sub "${Project}-${TraineeName}-jenkins"
+          Value: !Sub "${TraineeName}-jenkins"
           PropagateAtLaunch: true
