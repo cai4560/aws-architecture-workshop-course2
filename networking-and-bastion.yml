@@ -1,0 +1,12 @@
+---
+- hosts: networking
+  connection: local
+  gather_facts: False
+  roles:
+    - networking
+
+- hosts: bastion
+  connection: local
+  gather_facts: False
+  roles:
+    - bastion

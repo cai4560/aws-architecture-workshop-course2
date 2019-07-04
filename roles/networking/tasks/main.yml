@@ -1,0 +1,25 @@
+---
+  - name: networking
+    cloudformation:
+      stack_name: "{{project}}-networking"
+      state: present
+      region: "{{aws_region}}"
+      disable_rollback: true
+      template: "cloudformation/networking.yml"
+      stack_policy: "policies/stack-policy.json"
+      template_parameters:
+        Project: "{{project}}"
+        VpcCidr: "{{vpc_cidr}}"
+        NatCidr: "{{nat_cidr}}"
+        NatSubnetACidr: "{{nat_subnet_a}}"
+        NatSubnetBCidr: "{{nat_subnet_b}}"
+        PublicCidr: "{{public_cidr}}"
+        PublicSubnetACidr: "{{public_subnet_a}}"
+        PublicSubnetBCidr: "{{public_subnet_b}}"
+        PrivateCidr: "{{private_cidr}}"
+        PrivateSubnetACidr: "{{private_subnet_a}}"
+        PrivateSubnetBCidr: "{{private_subnet_b}}"
+        DBSubnetACidr: "{{db_subnet_a}}"
+        DBSubnetBCidr: "{{db_subnet_b}}"
+      tags:
+        Project: "{{project}}"

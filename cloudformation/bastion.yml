@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Bastion Stack'
+
+Parameters:
+  Project:
+    Type: String
+  AmiID:
+    Type: String
+    Description: 'AMI ID'
+  PublicHostedZoneName:
+    Description: Domain name of top domain
+    Type: String
+  TWOfficeIP1:
+    Type: String
+    Default: '202.66.38.130'
+    Description: 'Office public IP, need to change depends on offices'
+
+Resources:
+  BastionSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allowing incoming on SSH port
+      VpcId:
+        "Fn::ImportValue": !Sub "${Project}-vpc-id"
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: '-1'
+          FromPort: '0'
+          ToPort: '0'
+      SecurityGroupIngress:
+        - CidrIp: !Sub "${TWOfficeIP1}/32"
+          IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: icmp
+          FromPort: '-1'
+          ToPort: '-1'
+      Tags:
+        - Key: Name
+          Value: !Sub "${Project}-bastion-security-group"
+
+  BastionInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      SubnetId:
+        "Fn::ImportValue": !Sub "${Project}-public-subnet-a"
+      ImageId: !Ref AmiID
+      InstanceType: t2.micro
+      KeyName: !Sub "${Project}"
+      SecurityGroupIds:
+        - !Ref BastionSG
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: '80'
+          VolumeType: gp2
+          DeleteOnTermination: 'true'
+      Tags:
+        - Key: Name
+          Value: !Sub "${Project}-bastion"
+      UserData:
+        "Fn::Base64": !Sub |
+          #!/bin/bash -ex
+          /bin/hostname ${Project}-bastion
+          /usr/bin/yum update -y
+          /usr/bin/yum install -y sysstat nmap curl wget vim elinks bind-utils mysql
+          pip install boto3 botocore
+
+  PrivateBastionSshHost:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId:
+        "Fn::ImportValue": !Sub "${Project}-private-acl"
+      RuleNumber: 10
+      Protocol: "6"
+      RuleAction: allow
+      Egress: 'false'
+      CidrBlock: !Join ["", [ !GetAtt BastionInstance.PrivateIp, "/32" ] ]
+      PortRange:
+        From: '22'
+        To: '22'
+
+  TWOfficeNat1SSH:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId:
+        "Fn::ImportValue": !Sub "${Project}-public-acl"
+      RuleNumber: 14
+      Protocol: '6'
+      RuleAction: allow
+      Egress: 'false'
+      CidrBlock: !Sub "${TWOfficeIP1}/32"
+      PortRange:
+        From: '22'
+        To: '22'
+
+  BastionDomainName:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Sub "bastion.${PublicHostedZoneName}"
+      HostedZoneName: !Ref PublicHostedZoneName
+      Comment: Bastion DomainName
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+      - !GetAtt 'BastionInstance.PublicDnsName'

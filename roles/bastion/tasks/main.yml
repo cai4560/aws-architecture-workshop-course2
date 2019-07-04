@@ -1,0 +1,16 @@
+---
+  - name: bastion
+    cloudformation:
+      stack_name: "{{project}}-bastion"
+      state: present
+      region: "{{aws_region}}"
+      disable_rollback: true
+      template: "cloudformation/bastion.yml"
+      stack_policy: "policies/stack-policy.json"
+      template_parameters:
+        Project: "{{project}}"
+        AmiID: "{{ami_id}}"
+        PublicHostedZoneName: "{{public_hosted_zone_name}}."
+        TWOfficeIP1: "{{tw_office_ip}}"
+      tags:
+        Project: "{{project}}"

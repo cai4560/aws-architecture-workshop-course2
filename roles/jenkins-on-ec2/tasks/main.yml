@@ -1,0 +1,16 @@
+---
+  - name: jenkins-on-ec2
+    cloudformation:
+      stack_name: "{{project}}-jenkins-on-ec2-{{trainee_name}}"
+      state: present
+      region: "{{aws_region}}"
+      disable_rollback: true
+      template: "cloudformation/jenkins-on-ec2.yml"
+      stack_policy: "policies/stack-policy.json"
+      template_parameters:
+        Project: "{{project}}"
+        TraineeName: "{{trainee_name}}"
+        ImageId: "{{image_id}}"
+        InstanceType: "{{instance_type}}"
+      tags:
+        Project: "{{project}}"

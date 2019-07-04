@@ -1,0 +1,8 @@
+[networking]
+networking.dev
+
+[bastion]
+bastion.dev
+
+[jenkins-on-ec2]
+jenkins-on-ec2.dev
