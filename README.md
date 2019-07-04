@@ -66,14 +66,14 @@ $ docker run --rm -it \
 ![aws-public-subnet](https://user-images.githubusercontent.com/7569085/59860508-8d434000-93b1-11e9-9a54-bb8e914febae.png)
 
 ```
-$ git checkout jenkins-auto-scaling-in-public-subnet
+$ git checkout alb-and-asg-in-public-subnet
 
 $ docker run --rm -it \
     -e AWS_ACCESS_KEY_ID=xxxxx \
     -e AWS_SECRET_ACCESS_KEY=xxxxx \
     -v ~/workspace/aws-training/aws-networking-bastion:/app \
     -w /app zpei/workshop:latest \
-        ansible-playbook -i inventory/dev/inventory playbook-jenkins.yml -vvv
+        ansible-playbook -i inventory/dev/inventory jenkins-with-alb-and-asg -vvv
 ```
 
 ## ALB + ASG In Public Subnet
@@ -81,43 +81,53 @@ $ docker run --rm -it \
 ![aws-alb-public-subent](https://user-images.githubusercontent.com/7569085/59860507-8caaa980-93b1-11e9-836d-7e00d09338d5.png)
 
 ```
-$ git checkout jenkins-alb-auto-scaling-public
+$ git checkout alb-and-asg-and-route53
 
 $ docker run --rm -it \
     -e AWS_ACCESS_KEY_ID=xxxxx \
     -e AWS_SECRET_ACCESS_KEY=xxxxx \
     -v ~/workspace/aws-training/aws-networking-bastion:/app \
     -w /app zpei/workshop:latest \
-        ansible-playbook -i inventory/dev/inventory playbook-jenkins.yml -vvv
+        ansible-playbook -i inventory/dev/inventory jenkins-with-alb-and-asg.yml -vvv
 ```
 
-## ALB + ASG In Private Subnet
-
-![aws-alb-private-subent](https://user-images.githubusercontent.com/7569085/59860504-8caaa980-93b1-11e9-87eb-bd60e4236fa2.png)
-
-```
-$ git checkout jenkins-alb-auto-scaling-private
-
-$ docker run --rm -it \
-    -e AWS_ACCESS_KEY_ID=xxxxx \
-    -e AWS_SECRET_ACCESS_KEY=xxxxx \
-    -v ~/workspace/aws-training/aws-networking-bastion:/app \
-    -w /app zpei/workshop:latest \
-        ansible-playbook -i inventory/dev/inventory playbook-jenkins.yml -vvv
-```
-
-## Route53 + ALB + ASG In Private Subnet
+## ALB + ASG + Route53
 
 ![aws-route53-alb-private-subent](https://user-images.githubusercontent.com/7569085/59860503-8caaa980-93b1-11e9-9698-7cb5c52d8d9d.png)
 
-
 ```
-$ git checkout jenkins-alb-auto-scaling-route53
+$ git checkout jenkins-with-alb-and-asg
 
 $ docker run --rm -it \
     -e AWS_ACCESS_KEY_ID=xxxxx \
     -e AWS_SECRET_ACCESS_KEY=xxxxx \
     -v ~/workspace/aws-training/aws-networking-bastion:/app \
     -w /app zpei/workshop:latest \
-        ansible-playbook -i inventory/dev/inventory playbook-jenkins.yml -vvv
+        ansible-playbook -i inventory/dev/inventory jenkins-with-alb-and-asg.yml -vvv
+```
+
+## Jenkins with HTTPS
+
+```
+$ git checkout jenkins-with-https
+
+$ docker run --rm -it \
+    -e AWS_ACCESS_KEY_ID=xxxxx \
+    -e AWS_SECRET_ACCESS_KEY=xxxxx \
+    -v ~/workspace/aws-training/aws-networking-bastion:/app \
+    -w /app zpei/workshop:latest \
+        ansible-playbook -i inventory/dev/inventory jenkins-with-https.yml -vvv
+```
+
+## Jenkins with Backup
+
+```
+$ git checkout jenkins-with-backup
+
+$ docker run --rm -it \
+    -e AWS_ACCESS_KEY_ID=xxxxx \
+    -e AWS_SECRET_ACCESS_KEY=xxxxx \
+    -v ~/workspace/aws-training/aws-networking-bastion:/app \
+    -w /app zpei/workshop:latest \
+        ansible-playbook -i inventory/dev/inventory jenkins-with-backup.yml -vvv
 ```
