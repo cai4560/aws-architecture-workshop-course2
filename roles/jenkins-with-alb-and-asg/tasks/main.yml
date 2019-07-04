@@ -12,5 +12,7 @@
         TraineeName: "{{trainee_name}}"
         ImageId: "{{image_id}}"
         InstanceType: "{{instance_type}}"
+        ASGMinSize: "{{asg_min_size}}"
+        ASGMaxSize: "{{asg_max_size}}"
       tags:
         Project: "{{project}}"

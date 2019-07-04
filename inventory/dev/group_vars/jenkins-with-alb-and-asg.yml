@@ -1,2 +1,4 @@
 image_id: ami-0ccdbc8c1cb7957be
 instance_type: t2.micro
+asg_min_size: 1
+asg_max_size: 1

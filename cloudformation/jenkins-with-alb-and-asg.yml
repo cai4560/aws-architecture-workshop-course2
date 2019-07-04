@@ -13,12 +13,31 @@ Parameters:
   ImageId:
     Type: String
     Description: The instance ami id
+  ASGMaxSize:
+    Description: The maximum instance number in Auto Scaling group
+    Type: Number
+    Default: 1
+  ASGMinSize:
+    Description: The minimum instance number in Auto Scaling group
+    Type: Number
+    Default: 1
 
 Resources:
   JenkinsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for Jenkins instance
+      VpcId:
+        Fn::ImportValue: !Sub "${Project}-vpc-id"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Sub "${Project}-${TraineeName}-Jenkins-security-group"
@@ -28,6 +47,21 @@ Resources:
      Properties:
         ImageId: !Ref ImageId
         InstanceType: !Ref InstanceType
+        KeyName: !Ref Project
+        SecurityGroups:
+          - !Ref JenkinsSecurityGroup
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash -ex
+
+            # Install Jenkins
+            yum update -y
+            yum remove -y java-1.7.0-openjdk
+            yum install -y java-1.8.0
+            wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
+            rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+            yum install -y jenkins
+            service jenkins start
 
   JenkinsASGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -35,6 +69,9 @@ Resources:
       VPCZoneIdentifier:
         - "Fn::ImportValue": !Sub "${Project}-public-subnet-a"
         - "Fn::ImportValue": !Sub "${Project}-public-subnet-b"
+      LaunchConfigurationName: !Ref JenkinsASLaunchConf
+      MinSize: !Ref ASGMinSize
+      MaxSize: !Ref ASGMaxSize
       Tags:
         - Key: Name
           Value: !Sub "${Project}-${TraineeName}-jenkins"
