@@ -6,6 +6,9 @@ Parameters:
     Type: String
   TraineeName:
     Type: String
+  PublicHostedZoneName:
+    Description: The Route53 Zone in which to create records
+    Type: String
   InstanceType:
     Type: String
     Description: The instance type
@@ -124,6 +127,9 @@ Resources:
             yum install -y jenkins
             service jenkins start
 
+            # Signal when an instance creation process has completed successfully
+            /opt/aws/bin/cfn-signal -e 0 -r "Jenkins instance Stack complete." '${WaitHandle}'
+
   JenkinsASGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -139,3 +145,23 @@ Resources:
         - Key: Name
           Value: !Sub "${TraineeName}-jenkins"
           PropagateAtLaunch: true
+
+  WaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+
+  WaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties:
+      Handle: !Ref WaitHandle
+      Timeout: 1500
+
+  JenkinsDomainName:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Sub "${TraineeName}.${PublicHostedZoneName}"
+      HostedZoneName: !Ref PublicHostedZoneName
+      Comment: !Sub "DomainName - ${TraineeName}"
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+      - !GetAtt ApplicationLoadBalancer.DNSName
