@@ -23,6 +23,71 @@ Parameters:
     Default: 1
 
 Resources:
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /login
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200
+      Name: !Sub "${TraineeName}-target"
+      Protocol: HTTP
+      Port: 8080
+      VpcId:
+        Fn::ImportValue: !Sub "${Project}-vpc-id"
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Jenkins ALB
+      VpcId:
+        Fn::ImportValue: !Sub "${Project}-vpc-id"
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${TraineeName}-jenkins-alb"
+      Scheme: internet-facing
+      Subnets:
+        - Fn::ImportValue: !Sub "${Project}-public-subnet-a"
+        - Fn::ImportValue: !Sub "${Project}-public-subnet-b"
+      SecurityGroups:
+        - Ref: ALBSecurityGroup
+
+  ALBHTPPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+
+  ALBHTPPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
   JenkinsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -67,11 +132,13 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       VPCZoneIdentifier:
-        - "Fn::ImportValue": !Sub "${Project}-public-subnet-a"
-        - "Fn::ImportValue": !Sub "${Project}-public-subnet-b"
+        - Fn::ImportValue: !Sub "${Project}-public-subnet-a"
+        - Fn::ImportValue: !Sub "${Project}-public-subnet-b"
       LaunchConfigurationName: !Ref JenkinsASLaunchConf
       MinSize: !Ref ASGMinSize
       MaxSize: !Ref ASGMaxSize
+      TargetGroupARNs:
+        - !Ref ALBTargetGroup
       Tags:
         - Key: Name
           Value: !Sub "${Project}-${TraineeName}-jenkins"
