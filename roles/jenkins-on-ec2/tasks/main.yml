@@ -10,6 +10,7 @@
       template_parameters:
         Project: "{{project}}"
         TraineeName: "{{trainee_name}}"
+        PublicHostedZoneName: "{{public_hosted_zone_name}}."
         ImageId: "{{image_id}}"
         InstanceType: "{{instance_type}}"
       tags:

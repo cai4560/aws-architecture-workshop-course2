@@ -6,6 +6,9 @@ Parameters:
     Type: String
   TraineeName:
     Type: String
+  PublicHostedZoneName:
+    Description: The Route53 Zone in which to create records
+    Type: String
   InstanceType:
     Type: String
     Description: The instance type
@@ -15,6 +18,25 @@ Parameters:
     Description: The instance ami id
 
 Resources:
+  JenkinsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Jenkins instance
+      VpcId:
+        Fn::ImportValue: !Sub "${Project}-vpc-id"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "${Project}-${TraineeName}-Jenkins-security-group"
+
   JenkinsInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -29,6 +51,8 @@ Resources:
           VolumeSize: 80
           VolumeType: gp2
           DeleteOnTermination: true
+      SecurityGroupIds:
+        - !Ref JenkinsSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub "${Project}-${TraineeName}-jenkins-instance"
@@ -44,3 +68,14 @@ Resources:
           rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
           yum install -y jenkins
           service jenkins start
+
+  JenkinsDomainName:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Sub "${TraineeName}.${PublicHostedZoneName}"
+      HostedZoneName: !Ref PublicHostedZoneName
+      Comment: !Sub "DomainName - ${TraineeName}"
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+      - !GetAtt JenkinsInstance.PublicDnsName
