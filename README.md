@@ -14,6 +14,7 @@
 
 在开始之前，你需要手动在AWS Web Console上创建名为: `aws-architecture-workshop`的key，下载后分发给所有学员。
 
+本地环境执行（以下步骤仅说明docker环境中执行的步骤）：
 ```
 $ git checkout master
 
@@ -23,20 +24,21 @@ AWS Secret Access Key [*******************]:
 Default region name [ap-northeast-1]
 Default output format [None]
 
-$ ansible-playbook -i inventory/dev/inventory networking-and-bastion.yml -vvvv
+$ ansible-playbook -i inventory/dev/inventory networking-and-bastion.yml -vvv
+# verbose mode (-vvv for more, -vvvv to enable connection debugging)
 ```
 
-或者在docker container中执行：
+或者在docker环境中执行：
 ```
 $ docker run --rm -it \
     -e AWS_ACCESS_KEY_ID=xxxxx \
     -e AWS_SECRET_ACCESS_KEY=xxxxx \
     -v ~/workspace/aws-training/aws-networking-bastion:/app \
     -w /app zpei/workshop:latest \
-        ansible-playbook -i inventory/dev/inventory networking-and-bastion.yml -vvvv
+        ansible-playbook -i inventory/dev/inventory networking-and-bastion.yml -vvv
 ```
 
-### 如何连接bastion?
+### 如何连接bastion?(需提前连接twdata网络)
 
 ```
 $ ssh-add ~/.ssh/aws-keys/aws-architecture-workshop.pem && ssh -A ec2-user@bastion.aws-architecture-workshop.com
@@ -44,19 +46,19 @@ $ ssh-add ~/.ssh/aws-keys/aws-architecture-workshop.pem && ssh -A ec2-user@basti
 
 ## 在Public Subnet中创建EC2 Instance
 
-在运行CloudFormation之前，需要修改`inventory/dev/group_vars/all.yml`中的`trainee_name`，否则会出现CloudFormation Stack重名（同一region）的问题。
+在运行CloudFormation之前，需要修改`inventory/dev/group_vars/all.yml`中的`trainee_name`，否则会出现同一Region下的Stack重名的问题。
 
 ![aws-ec2-instance-in-public-subnet](https://user-images.githubusercontent.com/7569085/59973698-b217fd00-95d5-11e9-9d24-1e38d67aa9f5.png)
 
 ```
-$ git checkout jenkins-instance
+$ git checkout jenkins-on-ec2
 
 $ docker run --rm -it \
     -e AWS_ACCESS_KEY_ID=xxxxx \
     -e AWS_SECRET_ACCESS_KEY=xxxxx \
     -v ~/workspace/aws-training/aws-networking-bastion:/app \
     -w /app zpei/workshop:latest \
-        ansible-playbook -i inventory/dev/inventory playbook-jenkins.yml -vvv
+        ansible-playbook -i inventory/dev/inventory jenkins-on-ec2.yml -vvv
 ```
 
 ## ASG In Public Subnet

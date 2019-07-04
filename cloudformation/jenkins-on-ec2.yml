@@ -15,7 +15,7 @@ Parameters:
     Description: The instance ami id
 
 Resources:
-  EC2Instance:
+  JenkinsInstance:
     Type: AWS::EC2::Instance
     Properties:
       SubnetId:
