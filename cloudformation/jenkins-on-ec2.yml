@@ -35,7 +35,7 @@ Resources:
         CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub "${Project}-${TraineeName}-Jenkins-security-group"
+          Value: !Sub "${TraineeName}-Jenkins-security-group"
 
   JenkinsInstance:
     Type: AWS::EC2::Instance
@@ -55,7 +55,7 @@ Resources:
         - !Ref JenkinsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub "${Project}-${TraineeName}-jenkins-instance"
+          Value: !Sub "${TraineeName}-jenkins-instance"
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -ex
