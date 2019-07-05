@@ -64,7 +64,7 @@ Resources:
       SecurityGroups:
         - Ref: ALBSecurityGroup
 
-  ALBHTPPListener:
+  ALBHTTPListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref ApplicationLoadBalancer
@@ -73,16 +73,6 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref ALBTargetGroup
-
-  ALBHTPPListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref ALBTargetGroup
-      LoadBalancerArn: !Ref ApplicationLoadBalancer
-      Port: 80
-      Protocol: HTTP
 
   JenkinsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
