@@ -27,6 +27,9 @@ Parameters:
   CertificateARN:
     Type: String
     Description: The Certificate Manager ARN
+  TWOfficeIP:
+    Type: String
+    Description: Office public Cidr IP, need to change depends on offices
 
 Resources:
   ALBTargetGroup:
@@ -54,11 +57,11 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${Project}-vpc-id"
       SecurityGroupIngress:
-      - CidrIp: 0.0.0.0/0
+      - CidrIp: !Sub "${TWOfficeIP}/32"
         IpProtocol: tcp
         FromPort: 80
         ToPort: 80
-      - CidrIp: 0.0.0.0/0
+      - CidrIp: !Sub "${TWOfficeIP}/32"
         IpProtocol: tcp
         FromPort: 443
         ToPort: 443
@@ -106,11 +109,11 @@ Resources:
       - IpProtocol: tcp
         FromPort: 8080
         ToPort: 8080
-        CidrIp: 0.0.0.0/0
+        SourceSecurityGroupId: !Ref ALBSecurityGroup
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
-        CidrIp: 0.0.0.0/0
+        SourceSecurityGroupId: !Ref ALBSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub "${TraineeName}-Jenkins-security-group"
@@ -143,8 +146,8 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       VPCZoneIdentifier:
-        - Fn::ImportValue: !Sub "${Project}-public-subnet-a"
-        - Fn::ImportValue: !Sub "${Project}-public-subnet-b"
+        - Fn::ImportValue: !Sub "${Project}-private-subnet-a"
+        - Fn::ImportValue: !Sub "${Project}-private-subnet-b"
       LaunchConfigurationName: !Ref JenkinsASLaunchConf
       MinSize: !Ref ASGMinSize
       MaxSize: !Ref ASGMaxSize

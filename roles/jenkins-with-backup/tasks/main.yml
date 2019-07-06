@@ -16,6 +16,7 @@
         ASGMinSize: "{{asg_min_size}}"
         ASGMaxSize: "{{asg_max_size}}"
         CertificateARN: "{{cert_arn}}"
+        TWOfficeIP: "{{tw_office_ip}}"
         BackupBucketName: "{{jenkins_backup_bucket}}"
       tags:
         Project: "{{project}}"
