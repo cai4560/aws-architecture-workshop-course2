@@ -23,6 +23,36 @@ Parameters:
     Default: 1
 
 Resources:
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /login
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200
+      Name: !Sub "${TraineeName}-target"
+      Protocol: HTTP
+      Port: 8080
+      VpcId:
+        Fn::ImportValue: !Sub "${Project}-vpc-id"
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+
+  ALBHTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+
   JenkinsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -67,11 +97,13 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       VPCZoneIdentifier:
-        - "Fn::ImportValue": !Sub "${Project}-public-subnet-a"
-        - "Fn::ImportValue": !Sub "${Project}-public-subnet-b"
+        - Fn::ImportValue: !Sub "${Project}-public-subnet-a"
+        - Fn::ImportValue: !Sub "${Project}-public-subnet-b"
       LaunchConfigurationName: !Ref JenkinsASLaunchConf
       MinSize: !Ref ASGMinSize
       MaxSize: !Ref ASGMaxSize
+      TargetGroupARNs:
+        - !Ref ALBTargetGroup
       Tags:
         - Key: Name
           Value: !Sub "${TraineeName}-jenkins"
