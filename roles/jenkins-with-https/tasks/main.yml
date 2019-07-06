@@ -16,5 +16,6 @@
         ASGMinSize: "{{asg_min_size}}"
         ASGMaxSize: "{{asg_max_size}}"
         CertificateARN: "{{cert_arn}}"
+        TWOfficeIP: "{{tw_office_ip}}"
       tags:
         Project: "{{project}}"
